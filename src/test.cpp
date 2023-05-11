@@ -52,19 +52,19 @@ int main(int argc, char **argv) {
     auto h_c  = (double*) malloc(sizeof(double)  ); 
     auto h_c2 = (double*) malloc(sizeof(double)  ); 
     h_c[0] = 0.0;
-    for (size_t i=0; i<M; i++) {
+    for (size_t i=0; i<N; i++) {
         h_a[i] = static_cast<double>(i);
         h_b[i] = static_cast<double>(i);
         h_c[0] += h_a[i]*h_b[i];
     }
 
     #ifdef USE_SYCL
-        auto d_a = sycl::malloc_device<double>(M, q); 
-        auto d_b = sycl::malloc_device<double>(M, q); 
+        auto d_a = sycl::malloc_device<double>(N, q); 
+        auto d_b = sycl::malloc_device<double>(N, q); 
         auto d_c = sycl::malloc_device<double>(1, q); 
 
-        q.memcpy(d_a, h_a, sizeof(double)*M);
-        q.memcpy(d_b, h_b, sizeof(double)*M).wait();
+        q.memcpy(d_a, h_a, sizeof(double)*N);
+        q.memcpy(d_b, h_b, sizeof(double)*N).wait();
         gpu_matmul(q, grid_size, d_c, d_a, d_b, N);
         q.wait();
         q.memcpy(h_c2, d_c, sizeof(double)).wait();
@@ -78,15 +78,15 @@ int main(int argc, char **argv) {
         double* d_a;
         double* d_b;
         double* d_c;
-        HIP_ASSERT(hipMalloc(&d_a, sizeof(double)*M));
-        HIP_ASSERT(hipMalloc(&d_b, sizeof(double)*M));
+        HIP_ASSERT(hipMalloc(&d_a, sizeof(double)*N));
+        HIP_ASSERT(hipMalloc(&d_b, sizeof(double)*N));
         HIP_ASSERT(hipMalloc(&d_c, sizeof(double)  ));
-        auto d_a = sycl::malloc_device<double>(M, q); 
-        auto d_b = sycl::malloc_device<double>(M, q); 
+        auto d_a = sycl::malloc_device<double>(N, q); 
+        auto d_b = sycl::malloc_device<double>(N, q); 
         auto d_c = sycl::malloc_device<double>(1, q); 
 
-        HIP_ASSERT(hipMemcpy(d_a, h_a, sizeof(double)*M, hipMemcpyHostToDevice));
-        HIP_ASSERT(hipMemcpy(d_b, h_b, sizeof(double)*M, hipMemcpyHostToDevice));
+        HIP_ASSERT(hipMemcpy(d_a, h_a, sizeof(double)*N, hipMemcpyHostToDevice));
+        HIP_ASSERT(hipMemcpy(d_b, h_b, sizeof(double)*N, hipMemcpyHostToDevice));
         gpu_matmul(q, grid_size, d_c, d_a, d_b, N);
         hipLaunchKernelGGL(gpu_matmul, dim3(grid_size), dim3(GPU_BLOCK_SIZE), 0, 0,
                 d_c, d_a, d_b, N); 
@@ -103,15 +103,15 @@ int main(int argc, char **argv) {
         double* d_a;
         double* d_b;
         double* d_c;
-        CUDA_ASSERT(cudaMalloc(&d_a, sizeof(double)*M));
-        CUDA_ASSERT(cudaMalloc(&d_b, sizeof(double)*M));
+        CUDA_ASSERT(cudaMalloc(&d_a, sizeof(double)*N));
+        CUDA_ASSERT(cudaMalloc(&d_b, sizeof(double)*N));
         CUDA_ASSERT(cudaMalloc(&d_c, sizeof(double)  ));
-        auto d_a = sycl::malloc_device<double>(M, q); 
-        auto d_b = sycl::malloc_device<double>(M, q); 
+        auto d_a = sycl::malloc_device<double>(N, q); 
+        auto d_b = sycl::malloc_device<double>(N, q); 
         auto d_c = sycl::malloc_device<double>(1, q); 
 
-        CUDA_ASSERT(cudaMemcpy(d_a, h_a, sizeof(double)*M, cudaMemcpyHostToDevice));
-        CUDA_ASSERT(cudaMemcpy(d_b, h_b, sizeof(double)*M, cudaMemcpyHostToDevice));
+        CUDA_ASSERT(cudaMemcpy(d_a, h_a, sizeof(double)*N, cudaMemcpyHostToDevice));
+        CUDA_ASSERT(cudaMemcpy(d_b, h_b, sizeof(double)*N, cudaMemcpyHostToDevice));
         cuda_wrapper::gpu_matmul_wrapper(dim3(grid_size), dim3(GPU_BLOCK_SIZE),
                 d_c, d_a, d_b, N);
         CUDA_ASSERT(cudaDeviceSynchronize());
