@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
     for (int argn = 1; argn < argc; ++argn) {
         std::string arg = argv[argn];
         if ((arg == "--number_of_elements") || (arg == "-N")) {
-            N = static_cast<size_t>(strtoul(argv[argn + 1]));
+            N = static_cast<size_t>(strtoul(argv[argn + 1], NULL, 0));
             argn++;
         } else if ((arg == "--help") || (arg == "-h")) {
             return usage(argv[0]);
