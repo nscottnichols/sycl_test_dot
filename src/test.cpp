@@ -10,6 +10,15 @@
 #include <iostream>
 #include <cassert>
 
+int usage(char* argv0, int ret = 1) {
+    std::cout << "Usage: " << argv0
+              << " [--number_of_elements|-N]" << std::endl << std::endl;
+    //FIXME finish help message
+    std::cout << "The '--number_of_elements' (default: 8)" << std::endl; 
+    std::cout << "The '--help|-h' flag prints this message" << std::endl;
+    return ret;
+}
+
 int main(int argc, char **argv) {
     //Parse arguments
     size_t N = 8;
