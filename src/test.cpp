@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
 
         q.memcpy(d_a, h_a, sizeof(double)*N);
         q.memcpy(d_b, h_b, sizeof(double)*N).wait();
-        gpu_matmul_short(q, grid_size, d_c, d_a, d_b, N);
+        gpu_matmul(q, grid_size, d_c, d_a, d_b, N);
         q.wait();
         q.memcpy(h_c2, d_c, sizeof(double)).wait();
 
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 
         HIP_ASSERT(hipMemcpy(d_a, h_a, sizeof(double)*N, hipMemcpyHostToDevice));
         HIP_ASSERT(hipMemcpy(d_b, h_b, sizeof(double)*N, hipMemcpyHostToDevice));
-        hipLaunchKernelGGL(gpu_matmul_short, dim3(grid_size), dim3(GPU_BLOCK_SIZE), 0, 0,
+        hipLaunchKernelGGL(gpu_matmul, dim3(grid_size), dim3(GPU_BLOCK_SIZE), 0, 0,
                 d_c, d_a, d_b, N); 
         HIP_ASSERT(hipDeviceSynchronize());
         HIP_ASSERT(hipMemcpy(h_c2, d_c, sizeof(double), hipMemcpyDeviceToHost));
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
 
         CUDA_ASSERT(cudaMemcpy(d_a, h_a, sizeof(double)*N, cudaMemcpyHostToDevice));
         CUDA_ASSERT(cudaMemcpy(d_b, h_b, sizeof(double)*N, cudaMemcpyHostToDevice));
-        cuda_wrapper::gpu_matmul_short_wrapper(dim3(grid_size), dim3(GPU_BLOCK_SIZE),
+        cuda_wrapper::gpu_matmul_wrapper(dim3(grid_size), dim3(GPU_BLOCK_SIZE),
                 d_c, d_a, d_b, N);
         CUDA_ASSERT(cudaDeviceSynchronize());
         CUDA_ASSERT(cudaMemcpy(h_c2, d_c, sizeof(double), cudaMemcpyDeviceToHost));
