@@ -115,7 +115,7 @@ void gpu_matmul(sycl::queue q, size_t grid_size, double* C, double* B, double* A
                             _c[local_idx] += _c[local_idx + 512];
                         }
                     });
-		#endif
+                #endif
 
                 #if (SUB_GROUP_SIZE >= 256)
                     wGroup.parallel_for_work_item([&](sycl::h_item<1> index) {
@@ -124,7 +124,7 @@ void gpu_matmul(sycl::queue q, size_t grid_size, double* C, double* B, double* A
                             _c[local_idx] += _c[local_idx + 256];
                         }
                     });
-		#endif
+                #endif
 
                 #if (SUB_GROUP_SIZE >= 128)
                     wGroup.parallel_for_work_item([&](sycl::h_item<1> index) {
@@ -133,7 +133,7 @@ void gpu_matmul(sycl::queue q, size_t grid_size, double* C, double* B, double* A
                             _c[local_idx] += _c[local_idx + 128];
                         }
                     });
-		#endif
+                #endif
 
                 #if (SUB_GROUP_SIZE >= 64)
                     wGroup.parallel_for_work_item([&](sycl::h_item<1> index) {
@@ -142,7 +142,7 @@ void gpu_matmul(sycl::queue q, size_t grid_size, double* C, double* B, double* A
                             _c[local_idx] += _c[local_idx + 64];
                         }
                     });
-		#endif
+                #endif
 
                 #if (SUB_GROUP_SIZE >= 32)
                     wGroup.parallel_for_work_item([&](sycl::h_item<1> index) {
@@ -151,7 +151,7 @@ void gpu_matmul(sycl::queue q, size_t grid_size, double* C, double* B, double* A
                             _c[local_idx] += _c[local_idx + 32];
                         }
                     });
-		#endif
+                #endif
 
                 #if (SUB_GROUP_SIZE >= 16)
                     wGroup.parallel_for_work_item([&](sycl::h_item<1> index) {
@@ -160,7 +160,7 @@ void gpu_matmul(sycl::queue q, size_t grid_size, double* C, double* B, double* A
                             _c[local_idx] += _c[local_idx + 16];
                         }
                     });
-		#endif
+                #endif
 
                 #if (SUB_GROUP_SIZE >= 8)
                     wGroup.parallel_for_work_item([&](sycl::h_item<1> index) {
@@ -169,7 +169,7 @@ void gpu_matmul(sycl::queue q, size_t grid_size, double* C, double* B, double* A
                             _c[local_idx] += _c[local_idx + 8];
                         }
                     });
-		#endif
+                #endif
 
                 #if (SUB_GROUP_SIZE >= 4)
                     wGroup.parallel_for_work_item([&](sycl::h_item<1> index) {
@@ -178,7 +178,7 @@ void gpu_matmul(sycl::queue q, size_t grid_size, double* C, double* B, double* A
                             _c[local_idx] += _c[local_idx + 4];
                         }
                     });
-		#endif
+                #endif
 
                 #if (SUB_GROUP_SIZE >= 2)
                     wGroup.parallel_for_work_item([&](sycl::h_item<1> index) {
@@ -187,7 +187,7 @@ void gpu_matmul(sycl::queue q, size_t grid_size, double* C, double* B, double* A
                             _c[local_idx] += _c[local_idx + 2];
                         }
                     });
-		#endif
+                #endif
 
                 #if (SUB_GROUP_SIZE >= 1)
                     wGroup.parallel_for_work_item([&](sycl::h_item<1> index) {
@@ -196,7 +196,7 @@ void gpu_matmul(sycl::queue q, size_t grid_size, double* C, double* B, double* A
                             _c[local_idx] += _c[local_idx + 1];
                         }
                     });
-		#endif
+                #endif
 
             #else
 
