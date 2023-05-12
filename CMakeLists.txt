@@ -9,8 +9,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_STANDARD_REQUIRED TRUE)
 
 # Check for workaround flag
-if(DEFINED SYCL_MATMUL_WA)
-    add_definitions(-D SYCL_MATMUL_WA=1)
+if(DEFINED USE_SYCL_MATMUL_WA)
+    add_definitions(-D SYCL_MATMUL_WA=${USE_SYCL_MATMUL_WA})
 endif()
 
 # Set GPU native support backend
