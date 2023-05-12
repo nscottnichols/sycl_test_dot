@@ -90,9 +90,6 @@ int main(int argc, char **argv) {
         HIP_ASSERT(hipMalloc(&d_a, sizeof(double)*N));
         HIP_ASSERT(hipMalloc(&d_b, sizeof(double)*N));
         HIP_ASSERT(hipMalloc(&d_c, sizeof(double)  ));
-        auto d_a = sycl::malloc_device<double>(N, q); 
-        auto d_b = sycl::malloc_device<double>(N, q); 
-        auto d_c = sycl::malloc_device<double>(1, q); 
 
         HIP_ASSERT(hipMemcpy(d_a, h_a, sizeof(double)*N, hipMemcpyHostToDevice));
         HIP_ASSERT(hipMemcpy(d_b, h_b, sizeof(double)*N, hipMemcpyHostToDevice));
@@ -115,9 +112,6 @@ int main(int argc, char **argv) {
         CUDA_ASSERT(cudaMalloc(&d_a, sizeof(double)*N));
         CUDA_ASSERT(cudaMalloc(&d_b, sizeof(double)*N));
         CUDA_ASSERT(cudaMalloc(&d_c, sizeof(double)  ));
-        auto d_a = sycl::malloc_device<double>(N, q); 
-        auto d_b = sycl::malloc_device<double>(N, q); 
-        auto d_c = sycl::malloc_device<double>(1, q); 
 
         CUDA_ASSERT(cudaMemcpy(d_a, h_a, sizeof(double)*N, cudaMemcpyHostToDevice));
         CUDA_ASSERT(cudaMemcpy(d_b, h_b, sizeof(double)*N, cudaMemcpyHostToDevice));
