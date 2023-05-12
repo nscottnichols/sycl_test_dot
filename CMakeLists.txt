@@ -8,6 +8,11 @@ include(GNUInstallDirs)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_STANDARD_REQUIRED TRUE)
 
+# Check for workaround flag
+if(DEFINED SYCL_MATMUL_WA)
+    add_definitions(-D SYCL_MATMUL_WA=1)
+endif()
+
 # Set GPU native support backend
 add_definitions(-D USE_GPU=1)
 set(GPU_BACKEND "sycl" CACHE STRING "Set GPU native backend: sycl, hip, cuda (default: sycl)")
