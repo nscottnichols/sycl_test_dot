@@ -8,7 +8,7 @@
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 
-void sub_group_reduce_add(volatile double _c, size_t local_idx) {
+void sub_group_reduce_add(volatile double* _c, size_t local_idx) {
     #if (SUB_GROUP_SIZE >= 512)
         _c[local_idx] += _c[local_idx + 512];
     #endif
