@@ -202,7 +202,7 @@ namespace cuda_wrapper {
                 C, B, A, N
                 );
     }
-    void gpu_matmul_wrapper(dim3 grid_size, dim3 group_size, cudaStream_t stream, double* C, double* B, double* A, size_t N) {
+    void gpu_matmul_short_wrapper(dim3 grid_size, dim3 group_size, cudaStream_t stream, double* C, double* B, double* A, size_t N) {
         gpu_matmul_short <<<grid_size, group_size, 0, stream>>> ( 
                 C, B, A, N
                 );
