@@ -151,39 +151,41 @@ void gpu_matmul(double* C, double* B, double* A, size_t N) {
     #endif
 
     //Sub-group simultaneous work-item tasks (warp/wavefront/sub-group)
-    //for (size_t j = SUB_GROUP_SIZE; j > 0; j /= 2) {
-    //    _c[local_idx] += _c[local_idx + j];
-    //}
-    #if (SUB_GROUP_SIZE >= 512)
-        _c[local_idx] += _c[local_idx + 512];
-    #endif
-    #if (SUB_GROUP_SIZE >= 256)
-        _c[local_idx] += _c[local_idx + 256];
-    #endif
-    #if (SUB_GROUP_SIZE >= 128)
-        _c[local_idx] += _c[local_idx + 128];
-    #endif
-    #if (SUB_GROUP_SIZE >= 64)
-        _c[local_idx] += _c[local_idx + 64];
-    #endif
-    #if (SUB_GROUP_SIZE >= 32)
-        _c[local_idx] += _c[local_idx + 32];
-    #endif
-    #if (SUB_GROUP_SIZE >= 16)
-        _c[local_idx] += _c[local_idx + 16];
-    #endif
-    #if (SUB_GROUP_SIZE >= 8)
-        _c[local_idx] += _c[local_idx + 8];
-    #endif
-    #if (SUB_GROUP_SIZE >= 4)
-        _c[local_idx] += _c[local_idx + 4];
-    #endif
-    #if (SUB_GROUP_SIZE >= 2)
-        _c[local_idx] += _c[local_idx + 2];
-    #endif
-    #if (SUB_GROUP_SIZE >= 1)
-        _c[local_idx] += _c[local_idx + 1];
-    #endif
+    if (threadIdx.x < SUB_GROUP_SIZE) {
+        //for (size_t j = SUB_GROUP_SIZE; j > 0; j /= 2) {
+        //    _c[local_idx] += _c[local_idx + j];
+        //}
+        #if (SUB_GROUP_SIZE >= 512)
+            _c[local_idx] += _c[local_idx + 512];
+        #endif
+        #if (SUB_GROUP_SIZE >= 256)
+            _c[local_idx] += _c[local_idx + 256];
+        #endif
+        #if (SUB_GROUP_SIZE >= 128)
+            _c[local_idx] += _c[local_idx + 128];
+        #endif
+        #if (SUB_GROUP_SIZE >= 64)
+            _c[local_idx] += _c[local_idx + 64];
+        #endif
+        #if (SUB_GROUP_SIZE >= 32)
+            _c[local_idx] += _c[local_idx + 32];
+        #endif
+        #if (SUB_GROUP_SIZE >= 16)
+            _c[local_idx] += _c[local_idx + 16];
+        #endif
+        #if (SUB_GROUP_SIZE >= 8)
+            _c[local_idx] += _c[local_idx + 8];
+        #endif
+        #if (SUB_GROUP_SIZE >= 4)
+            _c[local_idx] += _c[local_idx + 4];
+        #endif
+        #if (SUB_GROUP_SIZE >= 2)
+            _c[local_idx] += _c[local_idx + 2];
+        #endif
+        #if (SUB_GROUP_SIZE >= 1)
+            _c[local_idx] += _c[local_idx + 1];
+        #endif
+    }
 
     //Set C
     if (local_idx == 0) {
