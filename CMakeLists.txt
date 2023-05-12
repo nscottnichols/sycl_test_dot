@@ -63,7 +63,7 @@ set(exe test_matmul.e)
 file( GLOB TEST_MATMUL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp )
 if (${GPU_BACKEND} STREQUAL "cuda")
     file( GLOB TEST_MATMUL_CUDA ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cu )
-    add_executable(${exe} ${TEST_MATMUL_SRC} ${DEAC_CUDA})
+    add_executable(${exe} ${TEST_MATMUL_SRC} ${TEST_MATMUL_CUDA})
     set_target_properties( ${exe} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
     #if(APPLE)
