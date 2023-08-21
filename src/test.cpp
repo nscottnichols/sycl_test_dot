@@ -16,7 +16,7 @@ int usage(char* argv0, int ret = 1) {
     std::cout << "Optional arguments:"                                                                  << std::endl;
     std::cout << "  -h, --help                     shows help message and exits"                        << std::endl;
     std::cout << "  -N, --number_of_elements       number of elements in arrays (default: 8)"           << std::endl;
-    std::cout << "  -I, --number_of_iterations     number of iterations to perform matmul (default: 1)" << std::endl;
+    std::cout << "  -I, --number_of_iterations     number of iterations to perform dot (default: 1)" << std::endl;
     return ret;
 }
 
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
         }
     #endif
 
-    //test void gpu_matmul
+    //test void gpu_dot
     size_t grid_size = (N + GPU_BLOCK_SIZE - 1)/GPU_BLOCK_SIZE;
     assert(grid_size == 1);
     auto h_a  = (double*) malloc(sizeof(double)*N); 
@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
         q.memcpy(d_a, h_a, sizeof(double)*N);
         q.memcpy(d_b, h_b, sizeof(double)*N).wait();
         for (size_t i=0; i < I; i++) {
-            gpu_matmul(q, grid_size, d_c, d_a, d_b, N);
+            gpu_dot(q, grid_size, d_c, d_a, d_b, N);
             q.wait();
         }
         q.memcpy(h_c2, d_c, sizeof(double)).wait();
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
         HIP_ASSERT(hipMemcpy(d_a, h_a, sizeof(double)*N, hipMemcpyHostToDevice));
         HIP_ASSERT(hipMemcpy(d_b, h_b, sizeof(double)*N, hipMemcpyHostToDevice));
         for (size_t i=0; i < I; i++) {
-            hipLaunchKernelGGL(gpu_matmul, dim3(grid_size), dim3(GPU_BLOCK_SIZE), 0, 0,
+            hipLaunchKernelGGL(gpu_dot, dim3(grid_size), dim3(GPU_BLOCK_SIZE), 0, 0,
                     d_c, d_a, d_b, N); 
             HIP_ASSERT(hipDeviceSynchronize());
         }
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
         CUDA_ASSERT(cudaMemcpy(d_a, h_a, sizeof(double)*N, cudaMemcpyHostToDevice));
         CUDA_ASSERT(cudaMemcpy(d_b, h_b, sizeof(double)*N, cudaMemcpyHostToDevice));
         for (size_t i=0; i < I; i++) {
-            cuda_wrapper::gpu_matmul_wrapper(dim3(grid_size), dim3(GPU_BLOCK_SIZE),
+            cuda_wrapper::gpu_dot_wrapper(dim3(grid_size), dim3(GPU_BLOCK_SIZE),
                     d_c, d_a, d_b, N);
             CUDA_ASSERT(cudaDeviceSynchronize());
         }

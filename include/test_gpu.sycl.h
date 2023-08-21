@@ -133,7 +133,7 @@ void gpu_reduce_add(double* _c, sycl::group<Dimensions> work_group) {
     });
 }
 
-void gpu_matmul(sycl::queue q, size_t grid_size, double* __restrict__ C, double* __restrict__ B, double* __restrict__ A, size_t N) {
+void gpu_dot(sycl::queue q, size_t grid_size, double* __restrict__ C, double* __restrict__ B, double* __restrict__ A, size_t N) {
     // C = B*A where [B] = 1xN and [A] = Nx1
     q.submit([&](sycl::handler& cgh) {
         cgh.parallel_for_work_group(sycl::range<1>{grid_size}, sycl::range<1>{GPU_BLOCK_SIZE}, ([=](sycl::group<1> wGroup) [[sycl::reqd_sub_group_size(SUB_GROUP_SIZE)]] {
@@ -150,7 +150,7 @@ void gpu_matmul(sycl::queue q, size_t grid_size, double* __restrict__ C, double*
             });
 
             // Reduce _c (using shared local memory)
-            #ifdef SYCL_MATMUL_WA
+            #ifdef SYCL_DOT_WA
                 // copy/paste code directly from gpu_reduce_add
                 #if (GPU_BLOCK_SIZE >= 1024) && (SUB_GROUP_SIZE < 512)
                     wGroup.parallel_for_work_item([&](sycl::h_item<1> index) {

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18.0)
-project(test_matmul.e LANGUAGES CXX)
+project(test_dot.e LANGUAGES CXX)
 
 # Use GNUInstallDirs to install libraries into correct locations on all platforms.
 include(GNUInstallDirs)
@@ -9,8 +9,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_STANDARD_REQUIRED TRUE)
 
 # Check for workaround flag
-if(DEFINED USE_SYCL_MATMUL_WA)
-    add_definitions(-D SYCL_MATMUL_WA=${USE_SYCL_MATMUL_WA})
+if(DEFINED USE_SYCL_DOT_WA)
+    add_definitions(-D SYCL_DOT_WA=${USE_SYCL_DOT_WA})
 endif()
 
 # Set GPU native support backend
@@ -62,13 +62,13 @@ else()
 endif()
 
 # Determine executable name
-set(exe test_matmul.e)
+set(exe test_dot.e)
 
 # Find source files ( better to list explicitly https://stackoverflow.com/questions/1027247/specify-source-files-globally-with-glob )
-file( GLOB TEST_MATMUL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp )
+file( GLOB TEST_DOT_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp )
 if (${GPU_BACKEND} STREQUAL "cuda")
-    file( GLOB TEST_MATMUL_CUDA ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cu )
-    add_executable(${exe} ${TEST_MATMUL_SRC} ${TEST_MATMUL_CUDA})
+    file( GLOB TEST_DOT_CUDA ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cu )
+    add_executable(${exe} ${TEST_DOT_SRC} ${TEST_DOT_CUDA})
     set_target_properties( ${exe} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
     #if(APPLE)
@@ -79,7 +79,7 @@ if (${GPU_BACKEND} STREQUAL "cuda")
     #               BUILD_RPATH ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
     #endif()
 else()
-    add_executable(${exe} ${TEST_MATMUL_SRC})
+    add_executable(${exe} ${TEST_DOT_SRC})
 endif()
 
 # Define headers for target
@@ -95,7 +95,7 @@ if(${GPU_BACKEND} STREQUAL "sycl")
             " e.g. to target an NVIDIA A100 GPU:"
             "     '-DSYCL_FLAGS=\"-fsycl -fsycl-targets=nvptx64-nvidia-cuda -Xsycl-target-backend --cuda-gpu-arch=sm_80\"'")
     endif()
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${SYCL_FLAGS} -DTEST_MATMUL_DEBUG=1")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${SYCL_FLAGS} -DTEST_DOT_DEBUG=1")
 else()
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 endif()

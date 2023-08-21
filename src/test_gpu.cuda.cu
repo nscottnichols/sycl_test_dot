@@ -22,7 +22,7 @@ __device__ void warp_reduce(volatile double *sdata, size_t thread_idx) {
 }
 
 __global__
-void gpu_matmul_short(double* __restrict__ C, double* __restrict__ B, double* __restrict__ A, size_t N) {
+void gpu_dot_short(double* __restrict__ C, double* __restrict__ B, double* __restrict__ A, size_t N) {
     __shared__ double _c[GPU_BLOCK_SIZE];
     size_t _j = blockDim.x * blockIdx.x + threadIdx.x;
     if (_j < N) {
@@ -79,13 +79,13 @@ void gpu_matmul_short(double* __restrict__ C, double* __restrict__ B, double* __
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 namespace cuda_wrapper {
-    void gpu_matmul_wrapper(dim3 grid_size, dim3 group_size, double* __restrict__ C, double* __restrict__ B, double* __restrict__ A, size_t N) {
-        gpu_matmul <<<grid_size, group_size, 0, 0>>> ( 
+    void gpu_dot_wrapper(dim3 grid_size, dim3 group_size, double* __restrict__ C, double* __restrict__ B, double* __restrict__ A, size_t N) {
+        gpu_dot <<<grid_size, group_size, 0, 0>>> ( 
                 C, B, A, N
                 );
     }
-    void gpu_matmul_wrapper(dim3 grid_size, dim3 group_size, cudaStream_t stream, double* __restrict__ C, double* __restrict__ B, double* __restrict__ A, size_t N) {
-        gpu_matmul <<<grid_size, group_size, 0, stream>>> ( 
+    void gpu_dot_wrapper(dim3 grid_size, dim3 group_size, cudaStream_t stream, double* __restrict__ C, double* __restrict__ B, double* __restrict__ A, size_t N) {
+        gpu_dot <<<grid_size, group_size, 0, stream>>> ( 
                 C, B, A, N
                 );
     }

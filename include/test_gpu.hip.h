@@ -22,7 +22,7 @@ __device__ void warp_reduce(volatile double *sdata, size_t thread_idx) {
 }
 
 __global__
-void gpu_matmul(double* __restrict__ C, double* __restrict__ B, double* __restrict__ A, size_t N) {
+void gpu_dot(double* __restrict__ C, double* __restrict__ B, double* __restrict__ A, size_t N) {
     __shared__ double _c[GPU_BLOCK_SIZE];
     size_t _j = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     if (_j < N) {
