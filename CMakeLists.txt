@@ -9,8 +9,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_STANDARD_REQUIRED TRUE)
 
 # Check for workaround flag
-if(DEFINED USE_SYCL_DOT_WA)
-    add_definitions(-D SYCL_DOT_WA=${USE_SYCL_DOT_WA})
+if(DEFINED USE_SYCL_PASS_WORK_GROUP_WA)
+    add_definitions(-D SYCL_PASS_WORK_GROUP_WA=${USE_SYCL_PASS_WORK_GROUP_WA})
 endif()
 
 # Set GPU native support backend

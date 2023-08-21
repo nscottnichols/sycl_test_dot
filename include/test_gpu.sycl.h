@@ -150,7 +150,7 @@ void gpu_dot(sycl::queue q, size_t grid_size, double* __restrict__ C, double* __
             });
 
             // Reduce _c (using shared local memory)
-            #ifdef SYCL_DOT_WA
+            #ifdef SYCL_PASS_WORK_GROUP_WA
                 // copy/paste code directly from gpu_reduce_add
                 #if (GPU_BLOCK_SIZE >= 1024) && (SUB_GROUP_SIZE < 512)
                     wGroup.parallel_for_work_item([&](sycl::h_item<1> index) {
