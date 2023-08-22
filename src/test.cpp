@@ -13,10 +13,10 @@
 int usage(char* argv0, int ret = 1) {
     std::cout << "Usage: " << argv0
               << " [-h] [-N] [-I]" << std::endl << std::endl;
-    std::cout << "Optional arguments:"                                                                  << std::endl;
-    std::cout << "  -h, --help                     shows help message and exits"                        << std::endl;
-    std::cout << "  -N, --number_of_elements       number of elements in arrays (default: 8)"           << std::endl;
-    std::cout << "  -I, --number_of_iterations     number of iterations to perform dot (default: 1)" << std::endl;
+    std::cout << "Optional arguments:"                                                                       << std::endl;
+    std::cout << "  -h, --help                          shows help message and exits"                        << std::endl;
+    std::cout << "  -N, --number_of_elements            number of elements in arrays (default: 8)"           << std::endl;
+    std::cout << "  -I, --number_of_kernel_launches     number of iterations to perform dot (default: 1)"    << std::endl;
     return ret;
 }
 
@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
         } else if ((arg == "--number_of_elements") || (arg == "-N")) {
             N = static_cast<size_t>(strtoul(argv[argn + 1], NULL, 0));
             argn++;
-        } else if ((arg == "--number_of_iterations") || (arg == "-I")) {
+        } else if ((arg == "--number_of_kernel_launches") || (arg == "-I")) {
             I = static_cast<size_t>(strtoul(argv[argn + 1], NULL, 0));
             argn++;
         }
@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
         auto devices = sycl::device::get_devices();
         sycl::queue q = sycl::queue(devices[0]);
         
-        //Test for vaild subgroup size
+        //Test for valid subgroup size
         auto sg_sizes = q.get_device().get_info<sycl::info::device::sub_group_sizes>();
         if (std::none_of(sg_sizes.cbegin(), sg_sizes.cend(), [](auto i) { return i  == SUB_GROUP_SIZE; })) {
             std::stringstream ss;
@@ -60,31 +60,43 @@ int main(int argc, char **argv) {
     #endif
 
     //test void gpu_dot
-    size_t grid_size = (N + GPU_BLOCK_SIZE - 1)/GPU_BLOCK_SIZE;
-    assert(grid_size == 1);
     auto h_a  = (double*) malloc(sizeof(double)*N); 
     auto h_b  = (double*) malloc(sizeof(double)*N); 
-    auto h_c  = (double*) malloc(sizeof(double)  ); 
-    auto h_c2 = (double*) malloc(sizeof(double)  ); 
-    h_c[0] = 0.0;
+    auto h_c  = (double*) malloc(sizeof(double)*I); 
+    auto h_c2 = (double*) malloc(sizeof(double)*I); 
+
+    //initialize host memory to zero
+    for (size_t i=0; i<I; i++) {
+        h_c[i] = 0.0;
+    }
+
+    //set host arrays
     for (size_t i=0; i<N; i++) {
         h_a[i] = static_cast<double>(i);
-        h_b[i] = static_cast<double>(i);
-        h_c[0] += h_a[i]*h_b[i];
+        h_b[i] = static_cast<double>(N - i - 1);
+        for (size_t j=0; j<I; j++) {
+            h_c[j] += h_a[i]*h_b[i];
+        }
     }
 
     #ifdef USE_SYCL
-        auto d_a = sycl::malloc_device<double>(N, q); 
-        auto d_b = sycl::malloc_device<double>(N, q); 
-        auto d_c = sycl::malloc_device<double>(1, q); 
+        //Set device memory so reads are coming from separate memory locations
+        auto d_a = sycl::malloc_device<double>(N*I, q); 
+        auto d_b = sycl::malloc_device<double>(N*I, q); 
+        auto d_c = sycl::malloc_device<double>(I  , q); 
 
-        q.memcpy(d_a, h_a, sizeof(double)*N);
-        q.memcpy(d_b, h_b, sizeof(double)*N).wait();
-        for (size_t i=0; i < I; i++) {
-            gpu_dot(q, grid_size, d_c, d_a, d_b, N);
-            q.wait();
+        for (size_t i=0; i<I; i++) {
+            q.memcpy(d_a + i*N, h_a, sizeof(double)*N);
+            q.memcpy(d_b + i*N, h_b, sizeof(double)*N);
         }
-        q.memcpy(h_c2, d_c, sizeof(double)).wait();
+        q.wait();
+
+        for (size_t i=0; i < I; i++) {
+            gpu_dot(q, d_c + i, d_a + i*N, d_b + i*N, N);
+        }
+        q.wait();
+
+        q.memcpy(h_c2, d_c, sizeof(double)*I).wait();
 
         sycl::free(d_a, q);
         sycl::free(d_b, q);
@@ -95,18 +107,23 @@ int main(int argc, char **argv) {
         double* d_a;
         double* d_b;
         double* d_c;
-        HIP_ASSERT(hipMalloc(&d_a, sizeof(double)*N));
-        HIP_ASSERT(hipMalloc(&d_b, sizeof(double)*N));
-        HIP_ASSERT(hipMalloc(&d_c, sizeof(double)  ));
+        HIP_ASSERT(hipMalloc(&d_a, sizeof(double)*N*I));
+        HIP_ASSERT(hipMalloc(&d_b, sizeof(double)*N*I));
+        HIP_ASSERT(hipMalloc(&d_c, sizeof(double)*I  ));
 
-        HIP_ASSERT(hipMemcpy(d_a, h_a, sizeof(double)*N, hipMemcpyHostToDevice));
-        HIP_ASSERT(hipMemcpy(d_b, h_b, sizeof(double)*N, hipMemcpyHostToDevice));
-        for (size_t i=0; i < I; i++) {
-            hipLaunchKernelGGL(gpu_dot, dim3(grid_size), dim3(GPU_BLOCK_SIZE), 0, 0,
-                    d_c, d_a, d_b, N); 
-            HIP_ASSERT(hipDeviceSynchronize());
+        for (size_t i=0; i<I; i++) {
+            HIP_ASSERT(hipMemcpy(d_a + i*N, h_a, sizeof(double)*N, hipMemcpyHostToDevice));
+            HIP_ASSERT(hipMemcpy(d_b + i*N, h_b, sizeof(double)*N, hipMemcpyHostToDevice));
         }
-        HIP_ASSERT(hipMemcpy(h_c2, d_c, sizeof(double), hipMemcpyDeviceToHost));
+        HIP_ASSERT(hipDeviceSynchronize());
+
+        for (size_t i=0; i < I; i++) {
+            hipLaunchKernelGGL(gpu_dot, dim3(1), dim3(GPU_BLOCK_SIZE), 0, 0,
+                    d_c + i, d_a + i*N, d_b + i*N, N); 
+        }
+        HIP_ASSERT(hipDeviceSynchronize());
+
+        HIP_ASSERT(hipMemcpy(h_c2, d_c, sizeof(double)*I, hipMemcpyDeviceToHost));
         HIP_ASSERT(hipDeviceSynchronize());
 
         HIP_ASSERT(hipFree(d_a));
@@ -118,17 +135,22 @@ int main(int argc, char **argv) {
         double* d_a;
         double* d_b;
         double* d_c;
-        CUDA_ASSERT(cudaMalloc(&d_a, sizeof(double)*N));
-        CUDA_ASSERT(cudaMalloc(&d_b, sizeof(double)*N));
-        CUDA_ASSERT(cudaMalloc(&d_c, sizeof(double)  ));
+        CUDA_ASSERT(cudaMalloc(&d_a, sizeof(double)*N*I));
+        CUDA_ASSERT(cudaMalloc(&d_b, sizeof(double)*N*I));
+        CUDA_ASSERT(cudaMalloc(&d_c, sizeof(double)*I  ));
 
-        CUDA_ASSERT(cudaMemcpy(d_a, h_a, sizeof(double)*N, cudaMemcpyHostToDevice));
-        CUDA_ASSERT(cudaMemcpy(d_b, h_b, sizeof(double)*N, cudaMemcpyHostToDevice));
-        for (size_t i=0; i < I; i++) {
-            cuda_wrapper::gpu_dot_wrapper(dim3(grid_size), dim3(GPU_BLOCK_SIZE),
-                    d_c, d_a, d_b, N);
-            CUDA_ASSERT(cudaDeviceSynchronize());
+        for (size_t i=0; i<I; i++) {
+            CUDA_ASSERT(cudaMemcpy(d_a + i*N, h_a, sizeof(double)*N, cudaMemcpyHostToDevice));
+            CUDA_ASSERT(cudaMemcpy(d_b + i*N, h_b, sizeof(double)*N, cudaMemcpyHostToDevice));
         }
+        CUDA_ASSERT(cudaDeviceSynchronize());
+
+        for (size_t i=0; i < I; i++) {
+            cuda_wrapper::gpu_dot_wrapper(dim3(1), dim3(GPU_BLOCK_SIZE),
+                    d_c + i, d_a + i*N, d_b + i*N, N);
+        }
+        CUDA_ASSERT(cudaDeviceSynchronize());
+
         CUDA_ASSERT(cudaMemcpy(h_c2, d_c, sizeof(double), cudaMemcpyDeviceToHost));
         CUDA_ASSERT(cudaDeviceSynchronize());
 
