@@ -24,11 +24,18 @@ __device__ void warp_reduce(volatile double *sdata, size_t thread_idx) {
 __global__
 void gpu_dot(double* __restrict__ C, double* __restrict__ B, double* __restrict__ A, size_t N) {
     __shared__ double _c[GPU_BLOCK_SIZE];
-    size_t _j = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    size_t _j = hipThreadIdx_x;
     if (_j < N) {
         _c[hipThreadIdx_x] = A[_j]*B[_j];
     } else {
         _c[hipThreadIdx_x] = 0.0;
+    }
+
+    for (size_t i = 1; i < (N + GPU_BLOCK_SIZE - 1)/GPU_BLOCK_SIZE; i++) {
+        size_t j = GPU_BLOCK_SIZE*i + local_idx;
+        if (j < N) {
+            _c[_j] += A[j]*B[j];
+        }
     }
     __syncthreads();
 
