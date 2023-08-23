@@ -135,7 +135,7 @@ void gpu_reduce_add(double* _c, sycl::group<Dimensions> work_group) {
 
 template <int Dimensions = 1>
 void gpu_reduce_add(double* _c, sycl::nd_item<Dimensions> item) {
-    size_t local_idx = index.get_local_id(0);
+    size_t local_idx = item.get_local_id(0);
     #if (GPU_BLOCK_SIZE >= 1024) && (SUB_GROUP_SIZE < 512)
         if (local_idx < 512) {
             _c[local_idx] += _c[local_idx + 512];
@@ -325,10 +325,8 @@ void gpu_dot(sycl::queue q, double* __restrict__ C, double* __restrict__ B, doub
 
             //Set C
             wGroup.parallel_for_work_item([&](sycl::h_item<1> index) {
-                size_t group_idx = wGroup.get_group_id(0);
                 size_t local_idx = index.get_local_id(0);
                 if (local_idx == 0) {
-                     //C_tmp[group_idx] = _c[0];
                      C[0] = _c[0];
                 }
             });
@@ -442,7 +440,7 @@ void gpu_dot_wgdp(sycl::queue q, double* __restrict__ C, double* __restrict__ B,
             if (local_idx == 0) {
                  C[0] = _c[0];
             }
-        }));
+        });
     });
 }
 #endif
