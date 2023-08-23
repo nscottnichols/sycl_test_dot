@@ -8,9 +8,13 @@ include(GNUInstallDirs)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_STANDARD_REQUIRED TRUE)
 
-# Check for workaround flag
+# Check for workaround flags
 if(DEFINED USE_SYCL_PASS_WORK_GROUP_WA)
     add_definitions(-D SYCL_PASS_WORK_GROUP_WA=${USE_SYCL_PASS_WORK_GROUP_WA})
+endif()
+
+if(DEFINED USE_SYCL_PASS_ITEM_WA)
+    add_definitions(-D SYCL_PASS_ITEM_WA=${USE_SYCL_PASS_WORK_GROUP_WA})
 endif()
 
 # Set GPU native support backend
@@ -35,6 +39,10 @@ if (NOT ${GPU_BACKEND} STREQUAL "sycl")
     endif()
 else()
     add_definitions(-D USE_SYCL=1)
+    # Check if using work-group data parallel kernel invocation
+    if(DEFINED SYCL_USE_WGDP)
+        add_definitions(-D SYCL_USE_WGDP=${SYCL_USE_WGDP})
+    endif()
 endif()
 
 # Set number of threads per block

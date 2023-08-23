@@ -92,7 +92,11 @@ int main(int argc, char **argv) {
         q.wait();
 
         for (size_t i=0; i < I; i++) {
-            gpu_dot(q, d_c + i, d_a + i*N, d_b + i*N, N);
+            #ifdef SYCL_USE_WGDP
+                gpu_dot_wgdp(q, d_c + i, d_a + i*N, d_b + i*N, N);
+            #else
+                gpu_dot(q, d_c + i, d_a + i*N, d_b + i*N, N);
+            #endif
         }
         q.wait();
 
@@ -104,6 +108,12 @@ int main(int argc, char **argv) {
     #endif
 
     #ifdef USE_HIP
+        #if MAX_GPU_STREAMS > 1
+            hipStream_t stream_array[MAX_GPU_STREAMS];
+            for (size_t i = 0; i < MAX_GPU_STREAMS; i++) {
+                HIP_ASSERT(hipStreamCreate(&stream_array[i]));
+            }
+        #endif
         double* d_a;
         double* d_b;
         double* d_c;
@@ -118,8 +128,14 @@ int main(int argc, char **argv) {
         HIP_ASSERT(hipDeviceSynchronize());
 
         for (size_t i=0; i < I; i++) {
-            hipLaunchKernelGGL(gpu_dot, dim3(1), dim3(GPU_BLOCK_SIZE), 0, 0,
-                    d_c + i, d_a + i*N, d_b + i*N, N); 
+            #if MAX_GPU_STREAMS > 1
+                size_t stream_idx = i % MAX_GPU_STREAMS;
+                hipLaunchKernelGGL(gpu_dot, dim3(1), dim3(GPU_BLOCK_SIZE), 0, stream_array[stream_idx],
+                        d_c + i, d_a + i*N, d_b + i*N, N); 
+            #else
+                hipLaunchKernelGGL(gpu_dot, dim3(1), dim3(GPU_BLOCK_SIZE), 0, 0,
+                        d_c + i, d_a + i*N, d_b + i*N, N); 
+            #endif
         }
         HIP_ASSERT(hipDeviceSynchronize());
 
@@ -129,9 +145,19 @@ int main(int argc, char **argv) {
         HIP_ASSERT(hipFree(d_a));
         HIP_ASSERT(hipFree(d_b));
         HIP_ASSERT(hipFree(d_c));
+
+        for (size_t i = 0; i < MAX_GPU_STREAMS; i++) {
+            HIP_ASSERT(hipStreamDestroy(stream_array[i]));
+        }
     #endif
 
     #ifdef USE_CUDA
+        #if MAX_GPU_STREAMS > 1
+            cudaStream_t stream_array[MAX_GPU_STREAMS];
+            for (size_t i = 0; i < MAX_GPU_STREAMS; i++) {
+                CUDA_ASSERT(cudaStreamCreate(&stream_array[i]));
+            }
+        #endif
         double* d_a;
         double* d_b;
         double* d_c;
@@ -146,21 +172,33 @@ int main(int argc, char **argv) {
         CUDA_ASSERT(cudaDeviceSynchronize());
 
         for (size_t i=0; i < I; i++) {
-            cuda_wrapper::gpu_dot_wrapper(dim3(1), dim3(GPU_BLOCK_SIZE),
-                    d_c + i, d_a + i*N, d_b + i*N, N);
+            #if MAX_GPU_STREAMS > 1
+                size_t stream_idx = i % MAX_GPU_STREAMS;
+                cuda_wrapper::gpu_dot_wrapper(dim3(1), dim3(GPU_BLOCK_SIZE), stream_array[stream_idx],
+                        d_c + i, d_a + i*N, d_b + i*N, N);
+            #else
+                cuda_wrapper::gpu_dot_wrapper(dim3(1), dim3(GPU_BLOCK_SIZE),
+                        d_c + i, d_a + i*N, d_b + i*N, N);
+            #endif
         }
         CUDA_ASSERT(cudaDeviceSynchronize());
 
-        CUDA_ASSERT(cudaMemcpy(h_c2, d_c, sizeof(double), cudaMemcpyDeviceToHost));
+        CUDA_ASSERT(cudaMemcpy(h_c2, d_c, sizeof(double)*I, cudaMemcpyDeviceToHost));
         CUDA_ASSERT(cudaDeviceSynchronize());
 
         CUDA_ASSERT(cudaFree(d_a));
         CUDA_ASSERT(cudaFree(d_b));
         CUDA_ASSERT(cudaFree(d_c));
+
+        for (size_t i = 0; i < MAX_GPU_STREAMS; i++) {
+            CUDA_ASSERT(cudaStreamDestroy(stream_array[i]));
+        }
     #endif
 
-    std::cout << "h_c[0]:  " << h_c[0]  << std::endl; 
-    std::cout << "h_c2[0]: " << h_c2[0] << std::endl; 
+    for (size_t i=0; i < I; i++) {
+        std::cout << "h_c[" << i << "]:  " << h_c[i]  << std::endl; 
+        std::cout << "h_c2[" << i << "]: " << h_c2[i] << std::endl; 
+    }
 
     free(h_a );
     free(h_b );
