@@ -14,7 +14,7 @@ if(DEFINED USE_SYCL_PASS_WORK_GROUP_WA)
 endif()
 
 if(DEFINED USE_SYCL_PASS_ITEM_WA)
-    add_definitions(-D SYCL_PASS_ITEM_WA=${USE_SYCL_PASS_WORK_GROUP_WA})
+    add_definitions(-D SYCL_PASS_ITEM_WA=${USE_SYCL_PASS_ITEM_WA})
 endif()
 
 # Set GPU native support backend
