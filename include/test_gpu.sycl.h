@@ -339,7 +339,7 @@ void gpu_dot_wgdp(sycl::queue q, double* __restrict__ C, double* __restrict__ B,
     q.submit([&](sycl::handler& cgh) {
         // Shared Local Memory _c
         sycl::local_accessor<double, 1> _c(sycl::range<1>(GPU_BLOCK_SIZE), cgh);
-        cgh.parallel_for(sycl::nd_range<1>(sycl::range<1>(1), sycl::range<1>(GPU_BLOCK_SIZE)),
+        cgh.parallel_for(sycl::nd_range<1>(sycl::range<1>(GPU_BLOCK_SIZE), sycl::range<1>(GPU_BLOCK_SIZE)),
                 [=](sycl::nd_item<1> item) [[sycl::reqd_sub_group_size(SUB_GROUP_SIZE)]] {
             // Set shared local memory _c
             size_t local_idx = item.get_local_id(0);
