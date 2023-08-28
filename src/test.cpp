@@ -156,9 +156,11 @@ int main(int argc, char **argv) {
         HIP_ASSERT(hipFree(d_b));
         HIP_ASSERT(hipFree(d_c));
 
-        for (size_t i = 0; i < MAX_GPU_STREAMS; i++) {
-            HIP_ASSERT(hipStreamDestroy(stream_array[i]));
-        }
+        #if MAX_GPU_STREAMS > 1
+            for (size_t i = 0; i < MAX_GPU_STREAMS; i++) {
+                HIP_ASSERT(hipStreamDestroy(stream_array[i]));
+            }
+        #endif
     #endif
 
     #ifdef USE_CUDA
@@ -202,9 +204,11 @@ int main(int argc, char **argv) {
         CUDA_ASSERT(cudaFree(d_b));
         CUDA_ASSERT(cudaFree(d_c));
 
-        for (size_t i = 0; i < MAX_GPU_STREAMS; i++) {
-            CUDA_ASSERT(cudaStreamDestroy(stream_array[i]));
-        }
+        #if MAX_GPU_STREAMS > 1
+            for (size_t i = 0; i < MAX_GPU_STREAMS; i++) {
+                CUDA_ASSERT(cudaStreamDestroy(stream_array[i]));
+            }
+        #endif
     #endif
 
     for (size_t i=0; i < L; i++) {

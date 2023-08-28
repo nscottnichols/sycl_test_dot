@@ -32,7 +32,7 @@ void gpu_dot(double* __restrict__ C, double* __restrict__ B, double* __restrict_
     }
 
     for (size_t i = 1; i < (N + GPU_BLOCK_SIZE - 1)/GPU_BLOCK_SIZE; i++) {
-        size_t j = GPU_BLOCK_SIZE*i + local_idx;
+        size_t j = GPU_BLOCK_SIZE*i + _j;
         if (j < N) {
             _c[_j] += A[j]*B[j];
         }
