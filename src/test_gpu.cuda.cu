@@ -10,15 +10,28 @@
 // ---------------------------------------------------------------------------
 
 
-// GPU Kernel for reduction using warp (uses appropriate warp for NVIDIA vs AMD devices i. e. "portable wave aware code")
-__device__ void warp_reduce(volatile double *sdata, size_t thread_idx) {
-    if (warpSize == 64) { if (GPU_BLOCK_SIZE >= 128) sdata[thread_idx] += sdata[thread_idx + 64]; }
-    if (GPU_BLOCK_SIZE >= 64) sdata[thread_idx] += sdata[thread_idx + 32];
-    if (GPU_BLOCK_SIZE >= 32) sdata[thread_idx] += sdata[thread_idx + 16];
-    if (GPU_BLOCK_SIZE >= 16) sdata[thread_idx] += sdata[thread_idx + 8];
-    if (GPU_BLOCK_SIZE >= 8) sdata[thread_idx] += sdata[thread_idx + 4];
-    if (GPU_BLOCK_SIZE >= 4) sdata[thread_idx] += sdata[thread_idx + 2];
-    if (GPU_BLOCK_SIZE >= 2) sdata[thread_idx] += sdata[thread_idx + 1];
+__device__ void warp_reduce(volatile double *_slm, size_t local_idx) {
+    #if (SUB_GROUP_SIZE >= 64)
+        _slm[local_idx] += _slm[local_idx + 64];
+    #endif
+    #if (SUB_GROUP_SIZE >= 32)
+        _slm[local_idx] += _slm[local_idx + 32];
+    #endif
+    #if (SUB_GROUP_SIZE >= 16)
+        _slm[local_idx] += _slm[local_idx + 16];
+    #endif
+    #if (SUB_GROUP_SIZE >= 8)
+        _slm[local_idx] += _slm[local_idx + 8];
+    #endif
+    #if (SUB_GROUP_SIZE >= 4)
+        _slm[local_idx] += _slm[local_idx + 4];
+    #endif
+    #if (SUB_GROUP_SIZE >= 2)
+        _slm[local_idx] += _slm[local_idx + 2];
+    #endif
+    #if (SUB_GROUP_SIZE >= 1)
+        _slm[local_idx] += _slm[local_idx + 1];
+    #endif
 }
 
 __global__
@@ -40,35 +53,36 @@ void gpu_dot(double* __restrict__ C, double* __restrict__ B, double* __restrict_
     __syncthreads();
 
     // NEED TO REDUCE _c ON SHARED MEMORY AND ADD TO GLOBAL isf
-    if (GPU_BLOCK_SIZE >= 1024) {
+    #if (GPU_BLOCK_SIZE >= 1024) && (SUB_GROUP_SIZE < 512)
         if (threadIdx.x < 512) {
             _c[threadIdx.x] += _c[threadIdx.x + 512];
         }
         __syncthreads();
-    } 
+    #endif
 
-    if (GPU_BLOCK_SIZE >= 512) {
+    #if (GPU_BLOCK_SIZE >= 512) && (SUB_GROUP_SIZE < 256)
         if (threadIdx.x < 256) {
             _c[threadIdx.x] += _c[threadIdx.x + 256];
         }
         __syncthreads();
     } 
+    #endif
 
-    if (GPU_BLOCK_SIZE >= 256) {
+    #if (GPU_BLOCK_SIZE >= 256) && (SUB_GROUP_SIZE < 128)
         if (threadIdx.x < 128) {
             _c[threadIdx.x] += _c[threadIdx.x + 128];
         }
         __syncthreads();
     } 
 
-    if (warpSize == 32) {
+    #if (GPU_BLOCK_SIZE >= 128) && (SUB_GROUP_SIZE < 64)
         if (GPU_BLOCK_SIZE >= 128) {
             if (threadIdx.x < 64) {
                 _c[threadIdx.x] += _c[threadIdx.x + 64];
             }
             __syncthreads();
         } 
-    }
+    #endif
 
     if (threadIdx.x < warpSize) {
         warp_reduce(_c, threadIdx.x);
